@@ -1,0 +1,40 @@
+name: Pull Request Check # Workflow Name
+
+on: # Workflow Event Trigger
+  pull_request: # When pull_request executes
+      types: [opend, synchronize] # When PR created or updated
+
+jobs: # Work Definitions
+  check:
+    runs-on: ubuntu-lastest # In Ubuntu environment
+    permissions: # Sets permission
+      pull-requests: write # Set write permission on PR
+    steps: # Working steps
+      - uses: actions/github0script@v7
+        with: 
+          script: |  # Start script
+            const pull_request = context.payload.pull_request;
+
+            if (pull_request === undefined) {
+              console.log("This is not a pull request");
+              return ;
+            }
+
+            const body = pull_request.body;
+
+            if (!body) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pull_request.number,
+                body: "해당 PR은 가이드라인을 준수하지 않았습니다.",
+              });
+
+              await github.rest.pulls.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pull_request.number,
+                state: "closed",
+              })
+            }
+        
